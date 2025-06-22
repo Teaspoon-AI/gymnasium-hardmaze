@@ -1,0 +1,45 @@
+*.swp
+*.pyc
+*.py~
+.DS_Store
+.cache
+.pytest_cache/
+__pycache__/
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtualenv
+/env
+/venv
+/.venv
+
+
+.ipynb_checkpoints
+ghostdriver.log
+
+tutorial/*.html
+
+# IDE files
+.eggs
+.tox
+
+# PyCharm project files
+.idea

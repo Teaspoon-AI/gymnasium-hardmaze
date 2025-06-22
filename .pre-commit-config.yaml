@@ -1,0 +1,87 @@
+# Activate with:  pre-commit install
+# Run manually:    pre-commit run --all-files
+repos:
+  # ───────────────────────── Common sanity checks ──────────────────────────
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: check-symlinks
+      - id: destroyed-symlinks
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-toml
+      - id: check-ast
+      - id: check-added-large-files
+      - id: check-merge-conflict
+      - id: check-executables-have-shebangs
+      - id: check-shebang-scripts-are-executable
+      - id: detect-private-key
+      - id: debug-statements
+
+  # ───────────────────────── Spelling --------------------------------------
+  - repo: https://github.com/codespell-project/codespell
+    rev: v2.3.0
+    hooks:
+      - id: codespell
+        args: [--ignore-words-list=reacher,ure,referenc,wile,ontact,manuel]
+
+  # ───────────────────────── Static analysis / style -----------------------
+  - repo: https://github.com/PyCQA/flake8
+    rev: 7.1.1
+    hooks:
+      - id: flake8
+        args:
+          # Silence unused-import warnings in package init files, etc.
+          - '--per-file-ignores=*/__init__.py:F401 src/gymnasium_hardmaze/envs/__init__.py:E402'
+          - --ignore=E203,W503,E741
+          - --max-complexity=30
+          - --max-line-length=120
+          - --show-source
+          - --statistics
+
+  - repo: https://github.com/asottile/pyupgrade
+    rev: v3.19.1
+    hooks:
+      - id: pyupgrade
+        args: ["--py38-plus"]
+
+  - repo: https://github.com/PyCQA/isort
+    rev: 5.13.2
+    hooks:
+      - id: isort
+
+  - repo: https://github.com/python/black
+    rev: 24.10.0
+    hooks:
+      - id: black
+        args: ["--target-version", "py38"]
+
+  # ───────────────────────── Docstring style (Google) ----------------------
+  - repo: https://github.com/pycqa/pydocstyle
+    rev: 6.3.0
+    hooks:
+      - id: pydocstyle
+        exclude: >
+          ^(
+            docs/|
+            tests/|
+            src/gymnasium_hardmaze/envs/rendering|  # lots of pygame helpers
+            src/gymnasium_hardmaze/.*_egg-info
+          )
+        args:
+          - --source
+          - --explain
+          - --convention=google
+        additional_dependencies: ["tomli"]  # needed for py<3.11
+
+  # ───────────────────────── Type checking (Pyright) -----------------------
+  - repo: local
+    hooks:
+      - id: pyright
+        name: pyright
+        entry: bash -c 'uv run pyright --project=pyproject.toml'
+        language: system
+        types: [python]
+        pass_filenames: false        # full-project run is faster for pyright
+        require_serial: true         # avoid conflicts with uv
