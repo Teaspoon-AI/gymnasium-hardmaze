@@ -8,7 +8,7 @@ version = "0.1.0"
 description = "A Gymnasium-compatible implementation of hardmaze environment"
 readme = "README.md"
 authors = [
-    {name = "Stefano Palmieri", email = "your.email@example.com"},
+    {name = "Stefano Palmieri", email = "teaspoonaistu@gmail.com"},
 ]
 license = "MIT"
 license-files = ["LICENSE"]
@@ -40,8 +40,8 @@ filterwarnings = [
 ]
 
 [project.urls]
-"Homepage" = "https://github.com/yourusername/gymnasium_hardmaze"
-"Bug Tracker" = "https://github.com/yourusername/gymnasium_hardmaze/issues"
+"Homepage" = "https://github.com/Teaspoon-AI/gymnasium-hardmaze"
+"Bug Tracker" = "https://github.com/Teaspoon-AI/gymnasium-hardmaze/issue"
 
 [tool.setuptools]
 package-dir = {"" = "src"}
