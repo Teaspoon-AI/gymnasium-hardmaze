@@ -8,7 +8,7 @@
 A maze navigation simulator for reinforcement learning research, compatible with the [Gymnasium](https://gymnasium.farama.org/) API.
 
 <p align="center">
-  <img src="https://github.com/yourusername/gymnasium_hardmaze/raw/main/docs/images/gymnasium_hardmaze_preview.png" alt="Gynasium HardMaze Preview" width="600"/>
+  <img src="https://raw.github.com/Teaspoon-AI/gymnasium-hardmaze/main/hardmaze-text.png" alt="Gynasium HardMaze Preview" width="500"/>
 </p>
 
 ## Overview
@@ -28,7 +28,7 @@ Key features:
 pip install gymnasium-hardmaze
 
 # For development
-git clone https://github.com/yourusername/HardMaze.git
+git clone https://github.com/Teaspoon-AI/gymnasium-hardmaze.git
 cd HardMaze
 pip install -e .
 ```
@@ -100,7 +100,7 @@ If you use this software in your research, please cite:
 @software{gymnasium_hardmaze,
   author = {Stefano Palmieri},
   title = {HardMaze: A Gymnasium-compatible Implementation of hardmaze environment},
-  url = {https://github.com/yourusername/HardMaze},
+  url = {https://github.com/Teaspoon-AI/gymnasium-hardmaze},
   year = {2025},
 }
 ```

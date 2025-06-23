@@ -45,7 +45,7 @@ To cite this project please use:
 @software{gymnasium_hardmaze,
   author = {Stefano Palmieri},
   title = {Maze Simulator: A Gymnasium-compatible Implementation of hardmaze environment},
-  url = {https://github.com/Farama-Foundation/HardMaze},
+  url = {https://github.com/Teaspoon-AI/gymnasium-hardmaze},
   year = {2025},
 }
 ```
@@ -66,5 +66,5 @@ environments/hardmaze/index
 :hidden:
 :caption: Development
 release_notes
-Github <https://github.com/Farama-Foundation/HardMaze>
+Github <https://github.com/Teaspoon-AI/gymnasium-hardmaze>
 ```
