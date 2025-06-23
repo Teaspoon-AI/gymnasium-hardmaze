@@ -8,7 +8,7 @@
 A maze navigation simulator for reinforcement learning research, compatible with the [Gymnasium](https://gymnasium.farama.org/) API.
 
 <p align="center">
-  <img src="https://github.com/Teaspoon-AI/gymnasium-hardmaze/raw/main/docs/images/gymnasium_hardmaze_preview.png" alt="Gynasium HardMaze Preview" width="600"/>
+  <img src="https://raw.github.com/Teaspoon-AI/gymnasium-hardmaze/main/hardmaze-text.png" alt="Gynasium HardMaze Preview" width="500"/>
 </p>
 
 ## Overview
