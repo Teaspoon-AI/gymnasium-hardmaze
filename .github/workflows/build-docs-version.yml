@@ -1,17 +1,8 @@
-name: Manual Docs Versioning
+name: Docs Versioning
 on:
-  workflow_dispatch:
-    inputs:
-      version:
-          description: 'Documentation version to create'
-          required: true
-      commit:
-          description: 'Commit used to build the Documentation version'
-          required: false
-      latest:
-          description: 'Latest version?'
-          type: boolean
-
+  push:
+    tags:
+      - 'v?*.*.*'
 permissions:
   contents: write
 jobs:
@@ -22,12 +13,10 @@ jobs:
       SPHINX_GITHUB_CHANGELOG_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - uses: actions/checkout@v4
-        if: inputs.commit == ''
 
-      - uses: actions/checkout@v4
-        if: inputs.commit != ''
-        with:
-          ref: ${{ inputs.commit }}
+      - name: Get tag
+        id: tag
+        uses: dawidd6/action-get-tag@v1
 
       - name: Install uv
         uses: astral-sh/setup-uv@v6
@@ -40,11 +29,14 @@ jobs:
       - name: Install dependencies
         run: uv sync --group docs
 
+      - name: Install project
+        run: uv pip install -e .
+
       - name: Build Envs Docs
-        run: uv run docs/_scripts/gen_env_mds.py
+        run: uv run python docs/_scripts/gen_env_mds.py
 
       - name: Build Envs Display
-        run: uv run docs/_scripts/gen_gifs.py
+        run: uv run python docs/_scripts/gen_gifs.py
 
       - name: Build
         run: uv run sphinx-build -b dirhtml -v docs _build
@@ -53,7 +45,7 @@ jobs:
         run: mv _build/404/index.html _build/404.html
 
       - name: Update 404 links
-        run: uv run python docs/_scripts/move_404.py _build/404.html
+        run: uv run python docs/_scripts/move404.py _build/404.html
 
       - name: Remove .doctrees
         run: rm -r _build/.doctrees
@@ -62,12 +54,11 @@ jobs:
         uses: JamesIves/github-pages-deploy-action@v4
         with:
           folder: _build
-          target-folder: ${{ inputs.version }}
+          target-folder: ${{steps.tag.outputs.tag}}
           clean: false
 
       - name: Upload to GitHub Pages
         uses: JamesIves/github-pages-deploy-action@v4
-        if: inputs.latest
         with:
           folder: _build
           clean-exclude: |
