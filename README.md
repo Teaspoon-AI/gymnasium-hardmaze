@@ -97,7 +97,7 @@ The default reward function prioritizes reaching the goal, with partial rewards 
 If you use this software in your research, please cite:
 
 ```bibtex
-@software{gymnasium_hardmaze,
+@software{gymnasium-hardmaze,
   author = {Stefano Palmieri},
   title = {HardMaze: A Gymnasium-compatible Implementation of hardmaze environment},
   url = {https://github.com/Teaspoon-AI/gymnasium-hardmaze},
