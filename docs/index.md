@@ -15,7 +15,7 @@ A reimplementation of the canonical *Hard Maze* deception benchmark used in qual
 ## Installation
 
 ```python
-pip install gymnasium_hardmaze
+pip install gymnasium-hardmaze
 ```
 
 ## Usage
@@ -42,7 +42,7 @@ env.close()
 To cite this project please use:
 
 ```bibtex
-@software{gymnasium_hardmaze,
+@software{gymnasium-hardmaze,
   author = {Stefano Palmieri},
   title = {Maze Simulator: A Gymnasium-compatible Implementation of hardmaze environment},
   url = {https://github.com/Teaspoon-AI/gymnasium-hardmaze},
