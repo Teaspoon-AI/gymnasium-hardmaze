@@ -190,7 +190,7 @@
           <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
         </button>
       </div>
-      <label class="toc-overlay-icon toc-header-icon" for="__toc">
+      <label class="toc-overlay-icon toc-header-icon no-toc" for="__toc">
         <div class="visually-hidden">Toggle table of contents sidebar</div>
         <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
       </label>
@@ -260,7 +260,7 @@
                 </svg>
               </button>
             </div>
-            <label class="toc-overlay-icon toc-content-icon" for="__toc">
+            <label class="toc-overlay-icon toc-content-icon no-toc" for="__toc">
               <div class="visually-hidden">Toggle table of contents sidebar</div>
               <i class="icon"><svg>
                   <use href="#svg-toc"></use>
@@ -271,34 +271,6 @@
             
             <section class="tex2jax_ignore mathjax_ignore" id="release-notes">
 <h1>Release Notes<a class="headerlink" href="#release-notes" title="Link to this heading">¶</a></h1>
-<section id="release-2-1-0">
-<h2>Miniworld v2.1.0<a class="headerlink" href="#release-2-1-0" title="Link to this heading">¶</a></h2>
-<p><em>Released on 2025-01-12 - <a class="reference external" href="https://github.com/Farama-Foundation/Miniworld/releases/tag/2.1.0">GitHub</a> - <a class="reference external" href="https://pypi.org/project/gymnasium-hardmaze/2.1.0/">PyPI</a></em></p>
-<h1>v2.1.0 Release notes</h1>
-<p>In this release, Miniworld has been updated to support Gymnasium 0.29.1 and 1.0.0+, along with minor changes to the website.</p>
-<p>In addition, a <code>ManualControl</code> class has been added for easy testing by users in <code>miniworld.manual_control</code> (<a class="issue-link js-issue-link" data-error-text="Failed to load title" data-id="1673271109" data-permission-text="Title is private" data-url="https://github.com/Farama-Foundation/Miniworld/issues/94" data-hovercard-type="pull_request" data-hovercard-url="/Farama-Foundation/Miniworld/pull/94/hovercard" href="https://github.com/Farama-Foundation/Miniworld/pull/94">#94</a>). The <code>*.mtl</code> loading was more robust, and position specification is now feasible for <code>place_agent</code>.  Add a <code>StochasticAction</code> wrapper for users who wish to take random actions for a percentage of the time.</p>
-<p><strong>Full Changelog</strong>: <a class="commit-link" href="https://github.com/Farama-Foundation/Miniworld/compare/2.0.0...2.1.0"><tt>2.0.0...2.1.0</tt></a></p></section>
-<section id="release-2-0-1">
-<h2>Miniworld 2.0.1: Miniworld Becomes Mature<a class="headerlink" href="#release-2-0-1" title="Link to this heading">¶</a></h2>
-<p><em>Released on 2023-02-14 - <a class="reference external" href="https://github.com/Farama-Foundation/Miniworld/releases/tag/2.0.1">GitHub</a> - <a class="reference external" href="https://pypi.org/project/gymnasium-hardmaze/2.0.1/">PyPI</a></em></p>
-<h3>Release Notes</h3>
-<p>MiniWorld is a minimalistic 3D interior environment simulator for reinforcement learning &amp; robotics research that allows environments to be easily edited like Minigrid meets DM Lab. It can simulate environments with rooms, doors, hallways, and various objects (e.g., office and home environments, mazes). Miniworld 2.0.0 is the first mature release within Farama. This version transitions from gym to gymnasium. Additionally, this release adds CI testing, code standardization pipeline, tests for environments, and documentation for each environment.</p>
-<p>Furthermore, we have a website (<a href="https://miniworld.farama.org/" rel="nofollow">https://miniworld.farama.org/</a>) that has documentation that covers all the relevant details to start implementing a reinforcement learning agent. In future releases, we plan to add tutorials and more detailed documentation.</p>
-<h3>New Features and Improvements</h3>
-<ul>
-<li>Added Sign environment from the DREAM paper by <a class="user-mention notranslate" data-hovercard-type="user" data-hovercard-url="/users/ezliu/hovercard" data-octo-click="hovercard-link-click" data-octo-dimensions="link_type:self" href="https://github.com/ezliu">@ezliu</a> in <a class="issue-link js-issue-link" data-error-text="Failed to load title" data-id="957326153" data-permission-text="Title is private" data-url="https://github.com/Farama-Foundation/Miniworld/issues/47" data-hovercard-type="pull_request" data-hovercard-url="/Farama-Foundation/Miniworld/pull/47/hovercard" href="https://github.com/Farama-Foundation/Miniworld/pull/47">#47</a></li>
-<li>Updated to <code>Gymnasium v0.26.2</code> by <a class="user-mention notranslate" data-hovercard-type="user" data-hovercard-url="/users/BolunDai0216/hovercard" data-octo-click="hovercard-link-click" data-octo-dimensions="link_type:self" href="https://github.com/BolunDai0216">@BolunDai0216</a> in <a class="issue-link js-issue-link" data-error-text="Failed to load title" data-id="1410513424" data-permission-text="Title is private" data-url="https://github.com/Farama-Foundation/Miniworld/issues/72" data-hovercard-type="pull_request" data-hovercard-url="/Farama-Foundation/Miniworld/pull/72/hovercard" href="https://github.com/Farama-Foundation/Miniworld/pull/72">#72</a></li>
-<li>Replaced random number generator from random.py with np_random from gymnasium by <a class="user-mention notranslate" data-hovercard-type="user" data-hovercard-url="/users/hh2564/hovercard" data-octo-click="hovercard-link-click" data-octo-dimensions="link_type:self" href="https://github.com/hh2564">@hh2564</a> in <a class="issue-link js-issue-link" data-error-text="Failed to load title" data-id="1438404545" data-permission-text="Title is private" data-url="https://github.com/Farama-Foundation/Miniworld/issues/74" data-hovercard-type="pull_request" data-hovercard-url="/Farama-Foundation/Miniworld/pull/74/hovercard" href="https://github.com/Farama-Foundation/Miniworld/pull/74">#74</a></li>
-<li>Added <code>EzPickle</code> inheritance to the environments which enables pickling and unpickling objects via their constructor arguments by <a class="user-mention notranslate" data-hovercard-type="user" data-hovercard-url="/users/BolunDai0216/hovercard" data-octo-click="hovercard-link-click" data-octo-dimensions="link_type:self" href="https://github.com/BolunDai0216">@BolunDai0216</a> in <a class="issue-link js-issue-link" data-error-text="Failed to load title" data-id="1457074877" data-permission-text="Title is private" data-url="https://github.com/Farama-Foundation/Miniworld/issues/76" data-hovercard-type="pull_request" data-hovercard-url="/Farama-Foundation/Miniworld/pull/76/hovercard" href="https://github.com/Farama-Foundation/Miniworld/pull/76">#76</a></li>
-</ul>
-<h3>Bug Fixes and Documentation Updates</h3>
-<ul>
-<li>Made offscreen <code>gym-miniworld</code> work without updating NVIDIA drivers by <a class="user-mention notranslate" data-hovercard-type="user" data-hovercard-url="/users/ptigas/hovercard" data-octo-click="hovercard-link-click" data-octo-dimensions="link_type:self" href="https://github.com/ptigas">@ptigas</a> in <a class="issue-link js-issue-link" data-error-text="Failed to load title" data-id="856214496" data-permission-text="Title is private" data-url="https://github.com/Farama-Foundation/Miniworld/issues/40" data-hovercard-type="pull_request" data-hovercard-url="/Farama-Foundation/Miniworld/pull/40/hovercard" href="https://github.com/Farama-Foundation/Miniworld/pull/40">#40</a></li>
-<li>Added docstrings for the environments and updated <code>manual_control.py</code> by <a class="user-mention notranslate" data-hovercard-type="user" data-hovercard-url="/users/BolunDai0216/hovercard" data-octo-click="hovercard-link-click" data-octo-dimensions="link_type:self" href="https://github.com/BolunDai0216">@BolunDai0216</a> in <a class="issue-link js-issue-link" data-error-text="Failed to load title" data-id="1428986623" data-permission-text="Title is private" data-url="https://github.com/Farama-Foundation/Miniworld/issues/73" data-hovercard-type="pull_request" data-hovercard-url="/Farama-Foundation/Miniworld/pull/73/hovercard" href="https://github.com/Farama-Foundation/Miniworld/pull/73">#73</a></li>
-<li>Updated README and <code>manual_control.py</code> by <a class="user-mention notranslate" data-hovercard-type="user" data-hovercard-url="/users/BolunDai0216/hovercard" data-octo-click="hovercard-link-click" data-octo-dimensions="link_type:self" href="https://github.com/BolunDai0216">@BolunDai0216</a> in <a class="issue-link js-issue-link" data-error-text="Failed to load title" data-id="1475038840" data-permission-text="Title is private" data-url="https://github.com/Farama-Foundation/Miniworld/issues/77" data-hovercard-type="pull_request" data-hovercard-url="/Farama-Foundation/Miniworld/pull/77/hovercard" href="https://github.com/Farama-Foundation/Miniworld/pull/77">#77</a></li>
-<li>Added docs website by <a class="user-mention notranslate" data-hovercard-type="user" data-hovercard-url="/users/mgoulao/hovercard" data-octo-click="hovercard-link-click" data-octo-dimensions="link_type:self" href="https://github.com/mgoulao">@mgoulao</a> in <a class="issue-link js-issue-link" data-error-text="Failed to load title" data-id="1475180002" data-permission-text="Title is private" data-url="https://github.com/Farama-Foundation/Miniworld/issues/78" data-hovercard-type="pull_request" data-hovercard-url="/Farama-Foundation/Miniworld/pull/78/hovercard" href="https://github.com/Farama-Foundation/Miniworld/pull/78">#78</a></li>
-<li>Updated docstrings for all of the environments by <a class="user-mention notranslate" data-hovercard-type="user" data-hovercard-url="/users/BolunDai0216/hovercard" data-octo-click="hovercard-link-click" data-octo-dimensions="link_type:self" href="https://github.com/BolunDai0216">@BolunDai0216</a> in <a class="issue-link js-issue-link" data-error-text="Failed to load title" data-id="1516548637" data-permission-text="Title is private" data-url="https://github.com/Farama-Foundation/Miniworld/issues/81" data-hovercard-type="pull_request" data-hovercard-url="/Farama-Foundation/Miniworld/pull/81/hovercard" href="https://github.com/Farama-Foundation/Miniworld/pull/81">#81</a></li>
-</ul></section>
 </section>
 
           </article>
@@ -329,28 +301,8 @@
           
         </footer>
       </div>
-      <aside class="toc-drawer">
+      <aside class="toc-drawer no-toc">
         
-        
-        <div class="toc-sticky toc-scroll">
-          <div class="toc-title-container">
-            <span class="toc-title">
-              On this page
-            </span>
-          </div>
-          <div class="toc-tree-container">
-            <div class="toc-tree">
-              <ul>
-<li><a class="reference internal" href="#">Release Notes</a><ul>
-<li><a class="reference internal" href="#release-2-1-0">Miniworld v2.1.0</a></li>
-<li><a class="reference internal" href="#release-2-0-1">Miniworld 2.0.1: Miniworld Becomes Mature</a></li>
-</ul>
-</li>
-</ul>
-
-            </div>
-          </div>
-        </div>
         
         
       </aside>
