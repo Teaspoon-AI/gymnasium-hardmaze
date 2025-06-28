@@ -1,0 +1,66 @@
+name: Docs Versioning
+on:
+  push:
+    tags:
+      - 'v?*.*.*'
+permissions:
+  contents: write
+jobs:
+  docs:
+    name: Generate Website for new version
+    runs-on: ubuntu-latest
+    env:
+      SPHINX_GITHUB_CHANGELOG_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Get tag
+        id: tag
+        uses: dawidd6/action-get-tag@v1
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          version: "latest"
+
+      - name: Set up Python
+        run: uv python install 3.12
+
+      - name: Install dependencies
+        run: uv sync --group docs
+
+      - name: Install project
+        run: uv pip install -e .
+
+      - name: Build Envs Docs
+        run: uv run python docs/_scripts/gen_env_mds.py
+
+      - name: Build Envs Display
+        run: uv run python docs/_scripts/gen_gifs.py
+
+      - name: Build
+        run: uv run sphinx-build -b dirhtml -v docs _build
+
+      - name: Move 404
+        run: mv _build/404/index.html _build/404.html
+
+      - name: Update 404 links
+        run: uv run python docs/_scripts/move404.py _build/404.html
+
+      - name: Remove .doctrees
+        run: rm -r _build/.doctrees
+
+      - name: Upload to GitHub Pages
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: _build
+          target-folder: ${{steps.tag.outputs.tag}}
+          clean: false
+
+      - name: Upload to GitHub Pages
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: _build
+          clean-exclude: |
+            *.*.*/
+            main
