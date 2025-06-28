@@ -29,7 +29,7 @@ pip install gymnasium-hardmaze
 
 # For development
 git clone https://github.com/Teaspoon-AI/gymnasium-hardmaze.git
-cd HardMaze
+cd gymnasium-hardmaze
 pip install -e .
 ```
 
