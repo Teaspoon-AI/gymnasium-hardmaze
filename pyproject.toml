@@ -67,6 +67,22 @@ max-line-length = 88
 extend-ignore = "E203"
 exclude = [".git", "__pycache__", "build", "dist"]
 
+[tool.pyright]
+include = ["src/**", "tests/**", "docs/**"]
+exclude = [
+    "**/__pycache__"
+]
+typeCheckingMode = "basic"
+pythonVersion = "3.8"
+pythonPlatform = "All"
+enableTypeIgnoreComments = true
+
+# This is required as the CI pre-commit does not download the module dependencies
+# Therefore, we have to ignore missing imports
+reportMissingImports = "none"
+reportGeneralTypeIssues = "none"
+reportUnboundVariable = "warning"
+
 [tool.uv.sources]
 furo = { git = "https://github.com/Farama-Foundation/Celshast" }
 
