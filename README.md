@@ -92,6 +92,29 @@ The action space is a 3-dimensional continuous space:
 
 The default reward function prioritizes reaching the goal, with partial rewards for visiting points of interest along the way.
 
+## Similar Projects
+
+Several other projects provide maze navigation environments for robotics and AI research:
+
+### [Kheperax](https://github.com/adaptive-intelligent-robotics/Kheperax)
+Kheperax is a JAX-based reimplementation of the fastsim simulator that simulates Khepera-like robots in 2D mazes. Key differences from gymnasium-hardmaze:
+- **Hardware acceleration**: Fully implemented in JAX for GPU/TPU acceleration and massive parallelization
+- **Robot model**: Simulates circular robots with 2 wheels, configurable laser and bumper sensors
+- **Optimization focus**: Directly compatible with QDax library for Quality-Diversity optimization
+- **Performance**: Designed for high-throughput evolutionary algorithms and population-based methods
+
+### [fastsim_gym](https://github.com/mirandablue/fastsim_gym)
+A Gym wrapper for the pyfastsim simulator, also implementing Lehman & Stanley's hard maze. Key differences:
+- **Simulation backend**: Uses the pyfastsim C++ simulator for physics simulation
+- **Robot configuration**: Features 3 lasers at specific angles (-π/4, 0, π/4) and two bumpers
+- **Map format**: Requires binary PBM format maps with specific size constraints
+- **API compatibility**: Uses the older Gym API rather than the newer Gymnasium standard
+
+### How gymnasium-hardmaze differs:
+- **Modern API**: Built specifically for the Gymnasium API with full compatibility
+- **Pure Python**: No external simulator dependencies, making installation and debugging easier
+- **Research focus**: Carefully ported from ES-HyperNEAT codebase for accurate replication
+
 ## Citation
 
 If you use this software in your research, please cite:
