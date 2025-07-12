@@ -130,4 +130,15 @@ If you use this software in your research, please cite:
 
 ## Acknowledgements
 
-This project uses a fitness function derived from Sebastian Risi's 2011 ES-HyperNEAT paper, ported to Python and adapted to work with the Gymnasium API.
+The code in this project is derived from the original source code used in Sebastian Risi's 2011 ES-HyperNEAT paper.
+
+```bibtex
+@InProceedings{risi:gecco2011,
+  author       = "Sebastian Risi and Kenneth O. Stanley",
+  title        = "Enhancing ES-HyperNEAT to Evolve More Complex Regular Neural Networks",
+  booktitle    = "Proceedings of the Genetic and Evolutionary Computation Conference (GECCO-2010)",
+  year         = 2011,
+  publisher    = "ACM",
+  url          = "http://eplex.cs.ucf.edu/papers/risi_gecco11.pdf"
+}
+```
