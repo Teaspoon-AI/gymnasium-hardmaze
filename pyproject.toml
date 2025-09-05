@@ -89,7 +89,7 @@ furo = { git = "https://github.com/Farama-Foundation/Celshast" }
 [dependency-groups]
 dev = [
     "isort>=5.13.2",
-    "pyright>=1.1.399",
+    "pyright>=1.1.405",
     "pytest>=8.3.5",
     "pre-commit"
 ]
