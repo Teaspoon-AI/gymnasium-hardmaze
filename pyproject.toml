@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "gymnasium-hardmaze"
-version = "0.1.0"
+version = "0.1.1"
 description = "A Gymnasium-compatible implementation of hardmaze environment"
 readme = "README.md"
 authors = [
@@ -89,7 +89,7 @@ furo = { git = "https://github.com/Farama-Foundation/Celshast" }
 [dependency-groups]
 dev = [
     "isort>=5.13.2",
-    "pyright>=1.1.399",
+    "pyright>=1.1.405",
     "pytest>=8.3.5",
     "pre-commit"
 ]

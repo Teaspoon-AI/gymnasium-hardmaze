@@ -36,6 +36,7 @@ class MazeEnv(gym.Env, EzPickle):
         renderer (Optional[Renderer]): Renderer for visualization.
         action_space (spaces.Box): Action space for the robot.
         observation_space (spaces.Box): Observation space from sensors.
+        previous_fitness (float): Previous step's total fitness for delta calculation.
     """
 
     metadata = {
@@ -66,6 +67,7 @@ class MazeEnv(gym.Env, EzPickle):
         # Initialize state
         self.pois_reached = [False] * len(self.env.pois)
         self.reached_goal = False
+        self.previous_fitness = 0.0  # Track previous fitness for delta calculation
 
         # Set up renderer if needed
         self.renderer: Optional[Renderer] = None
@@ -108,6 +110,7 @@ class MazeEnv(gym.Env, EzPickle):
         self.env.reset()
         self.pois_reached = [False] * len(self.env.pois)
         self.reached_goal = False
+        self.previous_fitness = 0.0  # Reset previous fitness
 
         # Update sensors
         self.env.robot.update_rangefinders(self.env.walls)
@@ -143,8 +146,8 @@ class MazeEnv(gym.Env, EzPickle):
         # Get current observation
         observation = self._get_observation()
 
-        # Calculate reward
-        reward = self._calculate_reward()
+        # Calculate reward delta
+        reward = self._calculate_reward_delta()
 
         # Check if episode is done
         terminated = reached_goal_this_step
@@ -207,7 +210,7 @@ class MazeEnv(gym.Env, EzPickle):
         Args:
             action: Action vector [left_motor, forward, right_motor].
         """
-        # Clip to valid range [0, 1]
+        # Clip to valid range [0, 1]
         action_clipped: np.ndarray = np.clip(action, 0, 1)
 
         outputs: List[float] = [float(v) for v in action_clipped.tolist()]
@@ -253,15 +256,26 @@ class MazeEnv(gym.Env, EzPickle):
                     self.pois_reached[i] = True
             return False
 
-    def _calculate_reward(self) -> float:
-        """Calculate reward based on current state.
+    def _calculate_reward_delta(self) -> float:
+        """Calculate reward delta based on current state.
 
         Returns:
-            float: Current reward value.
+            float: Change in reward since last step.
         """
+        # Calculate current total fitness
         factory = FitnessFunctionFactory()
         fitness_function = factory.get_fitness_function("hardmaze")
-        return fitness_function(self.pois_reached, self.env, self.reached_goal)
+        current_fitness = fitness_function(
+            self.pois_reached, self.env, self.reached_goal
+        )
+
+        # Calculate delta
+        reward_delta = current_fitness - self.previous_fitness
+
+        # Update previous fitness for next step
+        self.previous_fitness = current_fitness
+
+        return reward_delta
 
     def close(self) -> None:
         """Clean up resources."""
