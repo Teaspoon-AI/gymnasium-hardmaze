@@ -335,14 +335,20 @@ class HardMazeEnvV0(MazeEnv):
     The observation space is a `Box(0, 1, (9,), float32)`, which is a concatenation of
     the robot's sensor readings:
 
-    - **5 Rangefinders:** These sensors are distributed symmetrically across the robot's
-      front, from -90 to +90 degrees. They return the normalized distance to the
-      nearest wall in their line of sight. A value of `1.0` means no wall is
-      detected within max range, while `0.0` indicates a wall is very close.
-    - **4 Radar "Pie-Slices":** These sensors detect the goal. They divide the
-      robot's forward view into four 90-degree arcs. Each sensor returns a binary
-      value (`0.0` or `1.0`) indicating whether the goal is within its angular
-      range and maximum detection distance.
+    - **5 Rangefinders:** Distributed symmetrically across the robot's front, from
+      +76.8 to -76.8 degrees, ordered left to right. They return the normalized
+      distance to the nearest wall in their line of sight. Distance is measured
+      from the robot's centre and the robot's own radius is discounted, so `1.0`
+      means nothing was found within the 40-unit sensing range and `0.0` means a
+      wall is close. Anything normalizing to `0.25` or below is reported as
+      exactly `0.0`, so the near field reads as a single "blocked" state rather
+      than a graded one.
+    - **4 Radar "Pie-Slices":** These sensors report *which way the goal lies*, not
+      how near it is. They divide the full circle into four 90-degree wedges --
+      index 0 straddles dead ahead, and the rest follow round the robot -- and each
+      returns a binary value indicating whether the goal falls inside its wedge.
+      There is no maximum detection distance, so exactly one of the four is lit at
+      all times and together they act as a coarse compass.
 
     ## Rewards
 
@@ -362,7 +368,8 @@ class HardMazeEnvV0(MazeEnv):
     ## Starting State
 
     The robot starts at a fixed position `(205, 387)` at the bottom of the maze, with a
-    fixed heading of 90 degrees (facing upwards).
+    fixed heading of 90 degrees (facing upwards). The `robot_heading` recorded in the
+    maze XML is not used; see `DEFAULT_START_HEADING` in `envs.components.robot`.
 
     ## Episode End
 

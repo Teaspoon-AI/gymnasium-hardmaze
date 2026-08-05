@@ -8,6 +8,24 @@ from typing import List, Tuple
 from .radar import Radar
 from .rangefinder import RangeFinder
 
+# Half the angular spread of the rangefinder array, in radians.
+#
+# The reference spaces its rangefinders evenly across [-1.3398, 1.3398], i.e.
+# +/-76.8 degrees, so the outermost pair look forward-and-out rather than
+# straight out to the sides. Widening this to +/-90 degrees costs the robot
+# forward coverage in the corridors it has to thread.
+SENSOR_HALF_SPREAD = 1.3398
+
+# Heading the robot starts at, in radians.
+#
+# The reference's environment file records `robot_heading` 0, and that is not
+# the value it runs: `hardmaze_exp.xml` sets `overrideTeamFormation`, so
+# `initializeRobots` reads the *experiment's* `robot_heading` of 270 degrees
+# instead. Headings here are signed the opposite way (see `update_position`,
+# which subtracts its y component), so the reference's 270 degrees is +pi/2
+# here. Both point the robot up the map, toward the goal.
+DEFAULT_START_HEADING = math.pi / 2
+
 
 class Robot:
     """Robot agent that navigates through the maze environment.
@@ -42,6 +60,7 @@ class Robot:
         heading_noise: float = 0.0,
         effector_noise: float = 0.0,
         sensor_noise: float = 0.0,
+        heading: float = DEFAULT_START_HEADING,
     ):
         """Initialize a robot agent with sensors.
 
@@ -50,11 +69,13 @@ class Robot:
             num_rangefinders: Number of rangefinder sensors.
             num_radars: Number of radar sensors.
             robot_size: Radius of the robot for collision detection.
-            range_distance: Maximum detection range for sensors.
+            range_distance: Sensing range measured out from the robot's skin.
             time_step: Time increment for movement updates.
             heading_noise: Amount of noise in heading changes (0-100).
             effector_noise: Amount of noise in effector changes (0-100).
             sensor_noise: Amount of noise in sensor changes (0-100).
+            heading: Initial heading in radians. See
+                :data:`DEFAULT_START_HEADING`.
         """
         self.name = "MazeRobotPieSlice"
         self.default_speed = 25.0
@@ -62,7 +83,7 @@ class Robot:
         self.actualRange = range_distance
         self.default_robot_size = robot_size
         self.velocity = 0.0
-        self.heading = math.pi / 2
+        self.heading = heading
         self.location = location
         self.old_location = location
         self.time_step = time_step
@@ -83,18 +104,30 @@ class Robot:
                 RuntimeWarning,
             )
 
-        # Initialize rangefinders
+        # Rangefinders, spread evenly across the forward arc from left to right.
+        # A lone sensor looks straight ahead rather than sitting at one end of
+        # the arc, which is where an even spread of one would otherwise put it.
         self.rangefinders: List[RangeFinder] = []
-        for i in range(num_rangefinders):
-            between_angle = math.pi / 4.0
-            final_angle = math.pi / 2 - (between_angle * i)
-            self.rangefinders.append(RangeFinder(final_angle, self.actualRange))
+        if num_rangefinders == 1:
+            angles = [0.0]
+        else:
+            spacing = 2.0 * SENSOR_HALF_SPREAD / (num_rangefinders - 1)
+            angles = [SENSOR_HALF_SPREAD - spacing * i for i in range(num_rangefinders)]
+        for final_angle in angles:
+            self.rangefinders.append(
+                RangeFinder(final_angle, self.actualRange, self.default_robot_size)
+            )
 
-        # Initialize radars
+        # Radars, tiling the full circle. Index 0 straddles dead ahead, and the
+        # rest follow round, so the array reads as a compass: front, then each
+        # side in turn, then behind. The reference orders its wedges the same
+        # way, which matters because HyperNEAT-style controllers read geometry
+        # off the input layout -- shifting the array by one quadrant silently
+        # relabels "the goal is ahead" as "the goal is off to one side".
         self.radars: List[Radar] = []
         for i in range(num_radars):
-            between_angle = math.pi / 2.0
-            start_angle = math.pi / 4 - (between_angle * i)
+            between_angle = 2.0 * math.pi / num_radars
+            start_angle = -between_angle / 2.0 - (between_angle * i)
             self.radars.append(Radar(start_angle, start_angle + between_angle))
 
     def rand_bool(self) -> bool:
@@ -178,9 +211,7 @@ class Robot:
         for finder in self.rangefinders:
             a1x = self.location[0]
             a1y = self.location[1]
-            finder.distance = raycast(
-                walls, finder, a1x, a1y, self.heading, self.default_robot_size
-            )
+            finder.distance = raycast(walls, finder, a1x, a1y, self.heading)
 
     def update_radars(self, goal) -> None:
         """Update radar readings based on goal position.
@@ -193,10 +224,7 @@ class Robot:
         )
 
         for radar in self.radars:
-            r_range = radar.max_range
             start_angle = self.heading + radar.start_angle
             end_angle = self.heading + radar.end_angle
             x, y = self.location
-            radar.detecting = int(
-                radar_detect(goal, x, y, start_angle, end_angle, r_range)
-            )
+            radar.detecting = int(radar_detect(goal, x, y, start_angle, end_angle))

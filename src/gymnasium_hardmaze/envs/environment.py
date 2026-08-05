@@ -61,6 +61,11 @@ class Environment:
             float(robot_spacing_tag.get_text()) if robot_spacing_tag else 30.0
         )
 
+        # Recorded for completeness; deliberately NOT used to place the robot.
+        # The reference overrides this file's value from its experiment config
+        # (see `DEFAULT_START_HEADING` in components.robot), and hardmaze_env.xml
+        # stores 0 -- which would aim the robot along +x, into the wall beside
+        # it, instead of up the map toward the goal.
         heading_tag = cast(Optional[Tag], soup.find("robot_heading"))
         self.heading: float = float(heading_tag.get_text()) if heading_tag else 0.0
 
