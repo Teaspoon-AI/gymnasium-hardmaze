@@ -85,7 +85,7 @@ class Renderer:
             heading: Robot heading in radians.
             radar: Radar object.
         """
-        length = radar.max_range
+        length = radar.display_range
         start_angle = heading + radar.start_angle
         end_angle = heading + radar.end_angle
         ray_color = (200, 50, 0) if radar.detecting > 0 else (200, 200, 200)

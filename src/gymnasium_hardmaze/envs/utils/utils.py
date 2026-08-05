@@ -147,9 +147,14 @@ def raycast(
     a1x: float,
     a1y: float,
     heading: float,
-    radius: float,
 ) -> float:
     """Cast a ray and find the distance to the nearest wall.
+
+    The ray runs from the robot's centre out to ``finder.max_range``, and a hit
+    beyond that is not a hit at all, so the cast length and the saturation
+    distance are necessarily the same number. Casting further than the sensor
+    can report would find walls it then has to discard; reporting further than
+    the cast would claim a range that was never searched.
 
     Args:
         walls: List of walls to check for intersection.
@@ -157,13 +162,13 @@ def raycast(
         a1x: X-coordinate of ray origin.
         a1y: Y-coordinate of ray origin.
         heading: Current heading angle in radians.
-        radius: Radius to add to the origin point.
 
     Returns:
-        float: Distance to the nearest wall or max_range if none found.
+        float: Distance to the nearest wall, or ``finder.max_range`` if the ray
+        reaches that far without hitting one.
     """
     shortest_distance = finder.max_range
-    length = radius + finder.max_range
+    length = finder.max_range
     angle = heading + finder.angle
     a2x = a1x + length * math.cos(angle)
     a2y = a1y - length * math.sin(angle)
@@ -204,9 +209,11 @@ def radar_detect(
     y: float,
     start_angle: float,
     end_angle: float,
-    r_range: float,
 ) -> float:
-    """Check if goal is within radar detection range and angle.
+    """Check whether the goal lies inside a radar's angular wedge.
+
+    Bearing only -- distance is deliberately not consulted. See :class:`Radar`
+    for why the reference's goal sensor has no range limit.
 
     Args:
         goal: Goal object with x, y coordinates.
@@ -214,16 +221,12 @@ def radar_detect(
         y: Y-coordinate of radar origin.
         start_angle: Start angle of radar arc in radians.
         end_angle: End angle of radar arc in radians.
-        r_range: Maximum detection range.
 
     Returns:
         float: 1.0 if goal detected, 0.0 otherwise.
     """
     start_angle = normalize(start_angle)
     end_angle = normalize(end_angle)
-
-    if distance(x, y, goal.x, goal.y) > r_range:
-        return 0.0
 
     angle = normalize(math.atan2(-(goal.y - y), (goal.x - x)))
 
