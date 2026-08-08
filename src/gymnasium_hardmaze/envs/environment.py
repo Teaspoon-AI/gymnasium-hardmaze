@@ -72,6 +72,29 @@ class Environment:
         seed_tag = cast(Optional[Tag], soup.find("seed"))
         self.seed: int = int(seed_tag.get_text()) if seed_tag else 0
 
+        # Distance normaliser used by fitness functions of the form
+        # 1 - d / max_distance. Risi's environment files store it explicitly;
+        # for the dual task it equals the food room's diagonal.
+        max_distance_tag = cast(Optional[Tag], soup.find("maxDistance"))
+        self.max_distance: float = (
+            float(max_distance_tag.get_text()) if max_distance_tag else 0.0
+        )
+
+        # Area-of-interest rectangle as (x, y, width, height). The dual task's
+        # food-gathering room is this rectangle; environments without one
+        # (e.g. the hard maze) record None.
+        self.aoi_rectangle: Optional[tuple[float, float, float, float]] = None
+        aoi_tag = cast(Optional[Tag], soup.find("AOIRectangle"))
+        if aoi_tag is not None:
+            try:
+                x = float(cast(Tag, aoi_tag.find("X", recursive=False)).get_text())
+                y = float(cast(Tag, aoi_tag.find("Y", recursive=False)).get_text())
+                w = float(cast(Tag, aoi_tag.find("Width", recursive=False)).get_text())
+                h = float(cast(Tag, aoi_tag.find("Height", recursive=False)).get_text())
+                self.aoi_rectangle = (x, y, w, h)
+            except (AttributeError, ValueError) as err:
+                print(f"Error parsing AOIRectangle: {err}")
+
     def init_robot(self, soup: bs4.BeautifulSoup) -> None:
         """Initialize the robot from the XML soup.
 

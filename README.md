@@ -76,6 +76,37 @@ python -m gymnasium_hardmaze.examples.keyboard_agent
 | Environment ID | Description |
 |----------------|-------------|
 | `HardMaze-v0` | Complex maze with walls and multiple points of interest |
+| `DualTask-v0` | Risi & Stanley's dual task: navigation and food gathering with one body |
+
+### DualTask-v0
+
+The dual task of Risi & Stanley, *An Enhanced Hypercube-Based Encoding for
+Evolving the Placement, Density, and Connectivity of Neurons* (Artificial Life
+18(4), 2012, Section 6). One robot — the same body as `HardMaze-v0` — faces two
+independent scenarios, one per episode:
+
+- **navigation** — drive a small walled corridor from start to goal using only
+  the rangefinders; the pie-slice radars are food sensors and stay dark.
+  Fitness: `1 − d_goal` (scaled), exactly 1.0 on reaching the goal.
+- **food_gathering** — start at the centre of a walled room and collect four
+  food items in sequence, steering by the radar compass that points at the
+  current item. Fitness: `(n + (1 − d_food)) / 4`, exactly 1.0 after the
+  fourth item.
+
+Select the scenario at construction (`gym.make("DualTask-v0",
+scenario="food_gathering")`) or per episode via
+`reset(options={"scenario": ...})`. Rewards are per-step fitness deltas, so an
+episode's reward sum is the scenario's fitness; the paper averages the two
+scenarios and calls the domain solved at a combined 1.0.
+
+The world geometry is Risi's own environment file (`ENV_dual_task.xml`,
+provided by Sebastian Risi), shipped verbatim as `data/dualtask_env.xml`: the
+nine corridor walls, start and goal, the four food positions, the food room,
+and the `1 − d` normaliser (the room's diagonal). The evaluation length (45 s
+at the 0.099 s timestep, 454 steps), the 15-unit goal radius and the 20-unit
+food radius are reconstructions documented in
+`envs/dual_task_env.py`, since the original experiment configuration was never
+released.
 
 ### Observation Space
 
