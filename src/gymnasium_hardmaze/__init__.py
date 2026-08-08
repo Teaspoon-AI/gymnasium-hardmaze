@@ -13,4 +13,9 @@ register(
     entry_point="gymnasium_hardmaze.envs:HardMazeEnvV0",
 )
 
+register(
+    id="DualTask-v0",
+    entry_point="gymnasium_hardmaze.envs:DualTaskEnvV0",
+)
+
 __version__ = "0.1.0"
