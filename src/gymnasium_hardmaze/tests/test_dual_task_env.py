@@ -10,6 +10,7 @@ import gymnasium_hardmaze  # noqa: F401  (registers DualTask-v0)
 from gymnasium_hardmaze.envs.dual_task_env import (
     DEFAULT_EVALUATION_STEPS,
     FOOD_RADIUS,
+    FOOD_WALL_MARGIN,
     GOAL_RADIUS,
     DualTaskEnvV0,
 )
@@ -241,3 +242,56 @@ def test_goal_and_food_radii_are_the_documented_reconstructions():
     assert GOAL_RADIUS == 15.0
     assert FOOD_RADIUS == 20.0
     assert DEFAULT_EVALUATION_STEPS == 454
+
+
+class TestFoodPlacement:
+    """The paper's random food rule, and its reproducibility guarantees."""
+
+    def test_fixed_is_the_default_and_replays_the_file(self):
+        env = DualTaskEnvV0(scenario="food_gathering")
+        assert env.food_placement == "fixed"
+        env.reset(seed=0)
+        first = [(f.x, f.y) for f in env._episode_foods]
+        env.reset(seed=1)
+        assert [(f.x, f.y) for f in env._episode_foods] == first
+        assert first == [(f.x, f.y) for f in env.foods]
+        env.close()
+
+    def test_random_draws_inside_the_room_with_a_wall_margin(self):
+        env = DualTaskEnvV0(scenario="food_gathering", food_placement="random")
+        x, y, w, h = env.env.aoi_rectangle
+        for seed in range(20):
+            env.reset(seed=seed)
+            assert len(env._episode_foods) == 4
+            for food in env._episode_foods:
+                assert x + FOOD_WALL_MARGIN <= food.x <= x + w - FOOD_WALL_MARGIN
+                assert y + FOOD_WALL_MARGIN <= food.y <= y + h - FOOD_WALL_MARGIN
+        env.close()
+
+    def test_random_varies_across_seeds_but_repeats_within_one(self):
+        env = DualTaskEnvV0(scenario="food_gathering", food_placement="random")
+        env.reset(seed=7)
+        seven = [(f.x, f.y) for f in env._episode_foods]
+        env.reset(seed=8)
+        assert [(f.x, f.y) for f in env._episode_foods] != seven
+        env.reset(seed=7)
+        assert [(f.x, f.y) for f in env._episode_foods] == seven
+        env.close()
+
+    def test_random_food_is_reachable_and_edible(self):
+        """A driven robot can still eat randomly placed food."""
+        env = DualTaskEnvV0(scenario="food_gathering", food_placement="random")
+        env.reset(seed=3)
+        _drive(
+            env,
+            lambda e: (
+                e._episode_foods[e._foods_eaten].x,
+                e._episode_foods[e._foods_eaten].y,
+            ),
+        )
+        assert env._foods_eaten >= 1
+        env.close()
+
+    def test_rejects_unknown_placement(self):
+        with pytest.raises(ValueError, match="food_placement"):
+            DualTaskEnvV0(food_placement="everywhere")
