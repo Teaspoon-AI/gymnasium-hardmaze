@@ -142,6 +142,25 @@ class DualTaskEnvV0(gym.Env, EzPickle):
         render_mode: Optional[str] = None,
         food_placement: str = "fixed",
     ):
+        """Initialize the dual task environment.
+
+        Args:
+            env_file: Path to the XML environment file.
+            scenario: Which scenario this episode runs, ``"navigation"`` or
+                ``"food_gathering"``; also selectable per episode through
+                ``reset(options={"scenario": ...})``.
+            max_steps: Steps per scenario before truncation.
+            render_mode: Rendering mode; not implemented for this env.
+            food_placement: ``"fixed"`` replays the world file's four food
+                positions; ``"random"`` draws them uniformly inside the room
+                each episode, which is what the paper describes.
+
+        Raises:
+            ValueError: If ``scenario`` or ``food_placement`` is unknown, or
+                the world file lacks the room rectangle or distance
+                normaliser a dual-task world needs.
+            NotImplementedError: If a render mode is requested.
+        """
         EzPickle.__init__(
             self, env_file, scenario, max_steps, render_mode, food_placement
         )
@@ -243,9 +262,7 @@ class DualTaskEnvV0(gym.Env, EzPickle):
         assert self.env.aoi_rectangle is not None
         x, y, w, h = self.env.aoi_rectangle
         return [
-            poi
-            for poi in self.env.pois
-            if x <= poi.x <= x + w and y <= poi.y <= y + h
+            poi for poi in self.env.pois if x <= poi.x <= x + w and y <= poi.y <= y + h
         ]
 
     # ------------------------------------------------------------------
@@ -287,6 +304,21 @@ class DualTaskEnvV0(gym.Env, EzPickle):
     def reset(
         self, *, seed: Optional[int] = None, options: Optional[Dict[str, Any]] = None
     ) -> Tuple[np.ndarray, Dict[str, Any]]:
+        """Reset the environment to the start of a scenario.
+
+        Args:
+            seed: Random seed; also seeds the food draw under
+                ``food_placement="random"``, so a seeded reset replays an
+                episode exactly.
+            options: Accepts ``{"scenario": "navigation" | "food_gathering"}``
+                to switch scenario for this episode.
+
+        Returns:
+            Tuple[np.ndarray, Dict[str, Any]]: Initial observation and info.
+
+        Raises:
+            ValueError: If ``options["scenario"]`` is not a known scenario.
+        """
         super().reset(seed=seed)
         if options and "scenario" in options:
             scenario = options["scenario"]
@@ -313,6 +345,16 @@ class DualTaskEnvV0(gym.Env, EzPickle):
     def step(
         self, action: np.ndarray
     ) -> Tuple[np.ndarray, float, bool, bool, Dict[str, Any]]:
+        """Take a step in the current scenario.
+
+        Args:
+            action: Action vector [left_motor, forward, right_motor].
+
+        Returns:
+            Tuple: (observation, reward, terminated, truncated, info). The
+            reward is the step's change in the scenario's fitness, so an
+            episode's rewards sum to that fitness.
+        """
         action_clipped = np.clip(action, 0, 1)
         outputs = [float(v) for v in action_clipped.tolist()]
 
@@ -381,4 +423,4 @@ class DualTaskEnvV0(gym.Env, EzPickle):
         }
 
     def close(self) -> None:
-        pass
+        """Clean up resources; this environment holds none."""
