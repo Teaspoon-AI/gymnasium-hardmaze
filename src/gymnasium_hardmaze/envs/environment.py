@@ -83,7 +83,7 @@ class Environment:
         # Area-of-interest rectangle as (x, y, width, height). The dual task's
         # food-gathering room is this rectangle; environments without one
         # (e.g. the hard maze) record None.
-        self.aoi_rectangle: Optional[tuple[float, float, float, float]] = None
+        self.aoi_rectangle: tuple[float, float, float, float] | None = None
         aoi_tag = cast(Optional[Tag], soup.find("AOIRectangle"))
         if aoi_tag is not None:
             try:
