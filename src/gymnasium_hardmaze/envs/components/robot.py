@@ -8,6 +8,31 @@ from typing import List, Tuple
 from .radar import Radar
 from .rangefinder import RangeFinder
 
+#: Radar models. ``corrected`` computes the bearing to the target the way
+#: the sensor is plainly meant to; ``reference`` reproduces the arithmetic
+#: of the original C# ``PieSliceSensorArray.update``, which works its
+#: rotation out in *degrees* and hands it to a rotate() that reads
+#: *radians*. That scales the heading by 180/3.14 ~ 57, so the array is not
+#: a goal-bearing compass but a deterministic scrambling of one: sweeping
+#: the heading through a full turn changes the lit wedge 229 times instead
+#: of 4. Risi's published champions were evolved against the scrambled
+#: sensor, so reproducing his results requires it -- see the sensor-model
+#: note in the README.
+RADAR_MODELS = ("corrected", "reference")
+
+#: Wedge bounds in degrees for the reference model, in the C#'s own order:
+#: front (straddling zero), left, rear, right.
+REFERENCE_RADAR_BINS = ((315.0, 405.0), (45.0, 135.0), (135.0, 225.0), (225.0, 315.0))
+
+
+def _reference_point_angle(x: float, y: float) -> float:
+    """``Point2D.angle`` from the reference: atan over a half turn, pi as 3.14."""
+    if x == 0.0:
+        return 3.14 / 2.0 if y > 0 else 3.14 * 3.0 / 2.0
+    angle = math.atan(y / x)
+    return angle if x > 0 else angle + 3.14
+
+
 # Half the angular spread of the rangefinder array, in radians.
 #
 # The reference spaces its rangefinders evenly across [-1.3398, 1.3398], i.e.
@@ -61,6 +86,7 @@ class Robot:
         effector_noise: float = 0.0,
         sensor_noise: float = 0.0,
         heading: float = DEFAULT_START_HEADING,
+        radar_model: str = "corrected",
     ):
         """Initialize a robot agent with sensors.
 
@@ -76,7 +102,17 @@ class Robot:
             sensor_noise: Amount of noise in sensor changes (0-100).
             heading: Initial heading in radians. See
                 :data:`DEFAULT_START_HEADING`.
+            radar_model: ``"corrected"`` or ``"reference"``; see
+                :data:`RADAR_MODELS`.
+
+        Raises:
+            ValueError: If ``radar_model`` is not a known model.
         """
+        if radar_model not in RADAR_MODELS:
+            raise ValueError(
+                f"radar_model must be one of {RADAR_MODELS}, got {radar_model!r}"
+            )
+        self.radar_model = radar_model
         self.name = "MazeRobotPieSlice"
         self.default_speed = 25.0
         self.default_turn_speed = 9.0
@@ -219,6 +255,10 @@ class Robot:
         Args:
             goal: Goal object to detect.
         """
+        if self.radar_model == "reference":
+            self._update_radars_reference(goal)
+            return
+
         from gymnasium_hardmaze.envs.utils import (  # Import here to avoid circular imports
             radar_detect,
         )
@@ -228,3 +268,26 @@ class Robot:
             end_angle = self.heading + radar.end_angle
             x, y = self.location
             radar.detecting = int(radar_detect(goal, x, y, start_angle, end_angle))
+
+    def _update_radars_reference(self, goal) -> None:
+        """The original ``PieSliceSensorArray.update``, arithmetic intact.
+
+        The rotation amount is computed in degrees and then used as radians,
+        magnifying the heading by 180/3.14. Kept verbatim rather than
+        corrected: the reference's champions were selected against this
+        sensor, and "fixing" it changes what the task is.
+        """
+        gx, gy = float(int(goal.x)), float(int(goal.y))
+        x, y = self.location
+
+        rotation = -(self.heading * 180.0 / 3.14)  # degrees ...
+        cos_a, sin_a = math.cos(rotation), math.sin(rotation)  # ... used as radians
+        ox, oy = gx - x, gy - y
+        rotated_x = cos_a * ox - sin_a * oy + x
+        rotated_y = sin_a * ox + cos_a * oy + y
+
+        angle = _reference_point_angle(rotated_x - x, rotated_y - y) * 57.297
+        for radar, (low, high) in zip(self.radars, REFERENCE_RADAR_BINS):
+            radar.detecting = int(
+                (low <= angle < high) or (low <= angle + 360.0 < high)
+            )
