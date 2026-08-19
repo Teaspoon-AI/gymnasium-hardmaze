@@ -33,10 +33,20 @@ worth knowing:
   ``AOIRectangle`` -- the food room -- and is the paper's "[scaled] into the
   range [0, 1]" normaliser for both scenarios.
 * The file's ``POIPosition`` list holds the four food positions (inside the
-  room) plus a copy of the navigation goal; the food sequence is therefore
-  deterministic, which is what makes evaluations reproducible. The paper's
-  "placed at another random location" describes the agent's-eye view, not the
-  evaluation harness.
+  room) plus a copy of the navigation goal. Those four are the default
+  (``food_placement="fixed"``), which keeps evaluations reproducible; the
+  paper, however, states that food "is placed at another random location
+  once consumed by the agent", which ``food_placement="random"`` implements
+  by drawing each episode's food positions uniformly inside the room.
+
+  The distinction is not cosmetic. The file's four positions form a
+  906-unit circuit from the room centre; at the robot's 1.98 units/step
+  that is 417 steps of perfect driving out of a 454-step budget, so
+  collecting all four is a knife-edge race that near-optimal controllers
+  lose by a handful of steps. Uniform random circuits average 812 units
+  (the file's sits at the 68th percentile of difficulty), so under the
+  paper's own rule the task is regularly winnable -- which is the
+  difference between reproducing its reported solve rate and missing it.
 
 Reconstructed values, stated as such because the original experiment
 configuration was never released: the evaluation time reuses the platform's
@@ -56,6 +66,15 @@ from gymnasium.utils.ezpickle import EzPickle
 from .components.point_of_interest import PointOfInterest
 from .components.wall import Wall
 from .environment import Environment
+
+# Where each episode's food comes from: the world file's four positions, or
+# a fresh uniform draw inside the room (the paper's stated rule).
+FOOD_PLACEMENTS = ("fixed", "random")
+
+# Keep randomly drawn food clear of the room walls. Risi's own four sit at
+# least 59 units in; this bound also guarantees the robot (radius 10.5) can
+# centre itself on a food (radius 20) without touching a wall.
+FOOD_WALL_MARGIN = 50.0
 
 # Radius within which the navigation goal counts as reached. From the
 # SingleGoalPoint fitness function named by ENV_dual_task.xml.
@@ -109,6 +128,8 @@ class DualTaskEnvV0(gym.Env, EzPickle):
       episode via `reset(options={"scenario": ...})`.
     - `env_file`: World file; defaults to Risi's `dualtask_env.xml`.
     - `max_steps`: Steps per scenario before truncation.
+    - `food_placement`: `"fixed"` (the file's four positions, reproducible)
+      or `"random"` (uniform inside the room each episode, the paper's rule).
     """
 
     metadata = {"render_modes": [], "render_fps": 30}
@@ -119,16 +140,44 @@ class DualTaskEnvV0(gym.Env, EzPickle):
         scenario: str = "navigation",
         max_steps: int = DEFAULT_EVALUATION_STEPS,
         render_mode: Optional[str] = None,
+        food_placement: str = "fixed",
     ):
-        EzPickle.__init__(self, env_file, scenario, max_steps, render_mode)
+        """Initialize the dual task environment.
+
+        Args:
+            env_file: Path to the XML environment file.
+            scenario: Which scenario this episode runs, ``"navigation"`` or
+                ``"food_gathering"``; also selectable per episode through
+                ``reset(options={"scenario": ...})``.
+            max_steps: Steps per scenario before truncation.
+            render_mode: Rendering mode; not implemented for this env.
+            food_placement: ``"fixed"`` replays the world file's four food
+                positions; ``"random"`` draws them uniformly inside the room
+                each episode, which is what the paper describes.
+
+        Raises:
+            ValueError: If ``scenario`` or ``food_placement`` is unknown, or
+                the world file lacks the room rectangle or distance
+                normaliser a dual-task world needs.
+            NotImplementedError: If a render mode is requested.
+        """
+        EzPickle.__init__(
+            self, env_file, scenario, max_steps, render_mode, food_placement
+        )
         if scenario not in SCENARIOS:
             raise ValueError(f"scenario must be one of {SCENARIOS}, got {scenario!r}")
+        if food_placement not in FOOD_PLACEMENTS:
+            raise ValueError(
+                f"food_placement must be one of {FOOD_PLACEMENTS}, "
+                f"got {food_placement!r}"
+            )
         if render_mode is not None:
             raise NotImplementedError("DualTask-v0 does not render yet")
         self.env_file = env_file
         self.scenario = scenario
         self.max_steps = int(max_steps)
         self.render_mode = render_mode
+        self.food_placement = food_placement
 
         self.env = Environment(self.env_file)
         if self.env.aoi_rectangle is None:
@@ -177,6 +226,33 @@ class DualTaskEnvV0(gym.Env, EzPickle):
             Wall(x, y + h, x, y),
         ]
 
+    def _draw_foods(self) -> List[PointOfInterest]:
+        """This episode's four food positions.
+
+        ``fixed`` replays the world file's sequence; ``random`` draws each
+        position uniformly inside the room, inset by
+        :data:`FOOD_WALL_MARGIN`. Drawing all four up front is equivalent to
+        the paper's "placed at another random location once consumed":
+        the agent only ever perceives the current one, and the draws are
+        independent of where it happens to be when it eats.
+
+        Randomness comes from ``self.np_random``, so a seeded ``reset``
+        reproduces an episode exactly.
+        """
+        if self.food_placement == "fixed":
+            return list(self.foods)
+
+        assert self.env.aoi_rectangle is not None
+        x, y, w, h = self.env.aoi_rectangle
+        margin = FOOD_WALL_MARGIN
+        return [
+            PointOfInterest(
+                float(self.np_random.uniform(x + margin, x + w - margin)),
+                float(self.np_random.uniform(y + margin, y + h - margin)),
+            )
+            for _ in range(len(self.foods))
+        ]
+
     def _food_sequence(self) -> List[PointOfInterest]:
         """The four food positions, in file order.
 
@@ -186,9 +262,7 @@ class DualTaskEnvV0(gym.Env, EzPickle):
         assert self.env.aoi_rectangle is not None
         x, y, w, h = self.env.aoi_rectangle
         return [
-            poi
-            for poi in self.env.pois
-            if x <= poi.x <= x + w and y <= poi.y <= y + h
+            poi for poi in self.env.pois if x <= poi.x <= x + w and y <= poi.y <= y + h
         ]
 
     # ------------------------------------------------------------------
@@ -202,9 +276,11 @@ class DualTaskEnvV0(gym.Env, EzPickle):
 
     @property
     def _current_food(self) -> Optional[PointOfInterest]:
-        if self.scenario != "food_gathering" or self._foods_eaten >= len(self.foods):
+        if self.scenario != "food_gathering" or self._foods_eaten >= len(
+            self._episode_foods
+        ):
             return None
-        return self.foods[self._foods_eaten]
+        return self._episode_foods[self._foods_eaten]
 
     def _scenario_fitness(self) -> float:
         """The paper's fitness for the current scenario, at this instant."""
@@ -216,9 +292,9 @@ class DualTaskEnvV0(gym.Env, EzPickle):
             goal = self.env.goal
             d = float(np.hypot(rx - goal.x, ry - goal.y))
             return max(0.0, 1.0 - d / max_distance)
-        if self._foods_eaten >= len(self.foods):
+        if self._foods_eaten >= len(self._episode_foods):
             return 1.0
-        food = self.foods[self._foods_eaten]
+        food = self._episode_foods[self._foods_eaten]
         d = float(np.hypot(rx - food.x, ry - food.y))
         return (self._foods_eaten + max(0.0, 1.0 - d / max_distance)) / 4.0
 
@@ -228,6 +304,21 @@ class DualTaskEnvV0(gym.Env, EzPickle):
     def reset(
         self, *, seed: Optional[int] = None, options: Optional[Dict[str, Any]] = None
     ) -> Tuple[np.ndarray, Dict[str, Any]]:
+        """Reset the environment to the start of a scenario.
+
+        Args:
+            seed: Random seed; also seeds the food draw under
+                ``food_placement="random"``, so a seeded reset replays an
+                episode exactly.
+            options: Accepts ``{"scenario": "navigation" | "food_gathering"}``
+                to switch scenario for this episode.
+
+        Returns:
+            Tuple[np.ndarray, Dict[str, Any]]: Initial observation and info.
+
+        Raises:
+            ValueError: If ``options["scenario"]`` is not a known scenario.
+        """
         super().reset(seed=seed)
         if options and "scenario" in options:
             scenario = options["scenario"]
@@ -242,6 +333,7 @@ class DualTaskEnvV0(gym.Env, EzPickle):
             self.env.robot.location = self.room_center
             self.env.robot.old_location = self.room_center
 
+        self._episode_foods = self._draw_foods()
         self._steps = 0
         self._foods_eaten = 0
         self._reached_goal = False
@@ -253,6 +345,16 @@ class DualTaskEnvV0(gym.Env, EzPickle):
     def step(
         self, action: np.ndarray
     ) -> Tuple[np.ndarray, float, bool, bool, Dict[str, Any]]:
+        """Take a step in the current scenario.
+
+        Args:
+            action: Action vector [left_motor, forward, right_motor].
+
+        Returns:
+            Tuple: (observation, reward, terminated, truncated, info). The
+            reward is the step's change in the scenario's fitness, so an
+            episode's rewards sum to that fitness.
+        """
         action_clipped = np.clip(action, 0, 1)
         outputs = [float(v) for v in action_clipped.tolist()]
 
@@ -291,7 +393,7 @@ class DualTaskEnvV0(gym.Env, EzPickle):
         food = self._current_food
         if food is not None and float(np.hypot(rx - food.x, ry - food.y)) < FOOD_RADIUS:
             self._foods_eaten += 1
-        return self._foods_eaten >= len(self.foods)
+        return self._foods_eaten >= len(self._episode_foods)
 
     def _update_sensors(self) -> None:
         self.env.robot.update_rangefinders(self._walls)
@@ -321,4 +423,4 @@ class DualTaskEnvV0(gym.Env, EzPickle):
         }
 
     def close(self) -> None:
-        pass
+        """Clean up resources; this environment holds none."""
