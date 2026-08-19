@@ -18,15 +18,18 @@ from .components.wall import Wall
 class Environment:
     """Environment for maze navigation."""
 
-    def __init__(self, xml_file: str):
+    def __init__(self, xml_file: str, radar_model: str = "corrected"):
         """Initialize the environment from an XML file.
 
         Args:
             xml_file: Path to the XML file or resource name under `gymnasium_hardmaze/data/`.
+            radar_model: Goal-sensor model handed to the robot; see
+                :data:`~gymnasium_hardmaze.envs.components.robot.RADAR_MODELS`.
 
         Raises:
             FileNotFoundError: If the XML file cannot be found.
         """
+        self.radar_model = radar_model
         # Resolve file path whether it's a relative path or a package resource
         if os.path.isfile(xml_file):
             with open(xml_file, encoding="utf-8") as f:
@@ -103,7 +106,7 @@ class Environment:
         """
         start = cast(Optional[Tag], soup.find("start_point"))
         if start is None:
-            self.robot = Robot((400.0, 700.0))
+            self.robot = Robot((400.0, 700.0), radar_model=self.radar_model)
             return
 
         x_tag = cast(Optional[Tag], start.find("x"))
@@ -114,7 +117,7 @@ class Environment:
         except (AttributeError, ValueError):
             start_x, start_y = 400.0, 700.0
 
-        self.robot = Robot((start_x, start_y))
+        self.robot = Robot((start_x, start_y), radar_model=self.radar_model)
 
     def init_goal(self, soup: bs4.BeautifulSoup) -> None:
         """Initialize the goal from the XML soup.
