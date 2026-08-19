@@ -7,6 +7,8 @@ import numpy as np
 import pytest
 
 import gymnasium_hardmaze  # noqa: F401  (registers DualTask-v0)
+from gymnasium_hardmaze.envs.components.goal import Goal
+from gymnasium_hardmaze.envs.components.robot import Robot
 from gymnasium_hardmaze.envs.dual_task_env import (
     DEFAULT_EVALUATION_STEPS,
     FOOD_RADIUS,
@@ -295,3 +297,65 @@ class TestFoodPlacement:
     def test_rejects_unknown_placement(self):
         with pytest.raises(ValueError, match="food_placement"):
             DualTaskEnvV0(food_placement="everywhere")
+
+
+class TestRadarModel:
+    """The reference goal sensor, and how it differs from the corrected one."""
+
+    def test_corrected_is_the_default(self):
+        env = DualTaskEnvV0(scenario="food_gathering")
+        assert env.radar_model == "corrected"
+        assert env.env.robot.radar_model == "corrected"
+        env.close()
+
+    def test_reference_survives_reset(self):
+        """Environment.reset() rebuilds the robot, so the model must persist."""
+        env = DualTaskEnvV0(scenario="food_gathering", radar_model="reference")
+        env.reset(seed=0)
+        assert env.env.robot.radar_model == "reference"
+        env.close()
+
+    def test_corrected_radar_is_a_compass(self):
+        """Exactly four wedge changes per revolution, in bearing order."""
+        robot = Robot((300.0, 400.0), radar_model="corrected")
+        goal = Goal(500.0, 400.0)
+        lit = []
+        for degree in range(360):
+            robot.heading = math.radians(degree)
+            robot.update_radars(goal)
+            values = [r.get_value() for r in robot.radars]
+            assert sum(values) == 1  # a compass lights exactly one wedge
+            lit.append(values.index(1))
+        changes = sum(lit[i] != lit[i - 1] for i in range(360))
+        assert changes == 4
+
+    def test_reference_radar_scrambles_the_bearing(self):
+        """The degrees-as-radians bug magnifies heading by ~57."""
+        robot = Robot((300.0, 400.0), radar_model="reference")
+        goal = Goal(500.0, 400.0)
+        lit = []
+        for degree in range(360):
+            robot.heading = math.radians(degree)
+            robot.update_radars(goal)
+            values = [r.get_value() for r in robot.radars]
+            assert sum(values) == 1
+            lit.append(values.index(1))
+        changes = sum(lit[i] != lit[i - 1] for i in range(360))
+        # 180/3.14 ~ 57 turns of the wedge per turn of the robot; a clean
+        # compass would change 4 times.
+        assert changes > 200
+
+    def test_reference_radar_is_deterministic_not_noisy(self):
+        """It is a scrambling, not randomness -- controllers can exploit it."""
+        robot = Robot((300.0, 400.0), radar_model="reference")
+        goal = Goal(500.0, 400.0)
+        readings = []
+        for _ in range(3):
+            robot.heading = math.radians(37.0)
+            robot.update_radars(goal)
+            readings.append([r.get_value() for r in robot.radars])
+        assert readings[0] == readings[1] == readings[2]
+
+    def test_rejects_unknown_radar_model(self):
+        with pytest.raises(ValueError, match="radar_model"):
+            Robot((0.0, 0.0), radar_model="ultrasound")

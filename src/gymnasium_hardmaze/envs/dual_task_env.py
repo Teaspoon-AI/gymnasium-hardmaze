@@ -130,6 +130,8 @@ class DualTaskEnvV0(gym.Env, EzPickle):
     - `max_steps`: Steps per scenario before truncation.
     - `food_placement`: `"fixed"` (the file's four positions, reproducible)
       or `"random"` (uniform inside the room each episode, the paper's rule).
+    - `radar_model`: `"corrected"` (a clean food compass) or `"reference"`
+      (the original's scrambled pie-slice sensor).
     """
 
     metadata = {"render_modes": [], "render_fps": 30}
@@ -141,6 +143,7 @@ class DualTaskEnvV0(gym.Env, EzPickle):
         max_steps: int = DEFAULT_EVALUATION_STEPS,
         render_mode: Optional[str] = None,
         food_placement: str = "fixed",
+        radar_model: str = "corrected",
     ):
         """Initialize the dual task environment.
 
@@ -154,6 +157,9 @@ class DualTaskEnvV0(gym.Env, EzPickle):
             food_placement: ``"fixed"`` replays the world file's four food
                 positions; ``"random"`` draws them uniformly inside the room
                 each episode, which is what the paper describes.
+            radar_model: ``"corrected"`` (a clean food compass) or
+                ``"reference"`` (the original's degrees-as-radians sensor,
+                which the published champions were evolved against).
 
         Raises:
             ValueError: If ``scenario`` or ``food_placement`` is unknown, or
@@ -162,7 +168,13 @@ class DualTaskEnvV0(gym.Env, EzPickle):
             NotImplementedError: If a render mode is requested.
         """
         EzPickle.__init__(
-            self, env_file, scenario, max_steps, render_mode, food_placement
+            self,
+            env_file,
+            scenario,
+            max_steps,
+            render_mode,
+            food_placement,
+            radar_model,
         )
         if scenario not in SCENARIOS:
             raise ValueError(f"scenario must be one of {SCENARIOS}, got {scenario!r}")
@@ -178,8 +190,9 @@ class DualTaskEnvV0(gym.Env, EzPickle):
         self.max_steps = int(max_steps)
         self.render_mode = render_mode
         self.food_placement = food_placement
+        self.radar_model = radar_model
 
-        self.env = Environment(self.env_file)
+        self.env = Environment(self.env_file, radar_model=radar_model)
         if self.env.aoi_rectangle is None:
             raise ValueError(f"{env_file} has no AOIRectangle; not a dual-task world")
         if self.env.max_distance <= 0.0:
